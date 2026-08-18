@@ -73,16 +73,24 @@ implementação real).
 - Nome de modelo hardcoded em 3 lugares
 - `inspect.getsource()` de debug em `processor.py`
 
-### Fase 2 — Migrar a lógica de negócio para `prefect_rj_iplanrio` ⏳ (próxima)
+### Fase 2 — Migrar a lógica de negócio para `prefect_rj_iplanrio` ✅ (concluída — move mecânico)
 
-- [ ] Adicionar `iplanrio-agent-toolkit` como dependência git pinada em `pipelines/rj_iplanrio__nf_agent/pyproject.toml`
-- [ ] Remover a entrada de `agent-nf-validator` do `pyproject.toml` (rev `1b427b4`); declarar deps transitivas diretamente
-- [ ] Migrar regras de compliance (`rule_engine`) → `utils/compliance/`
-- [ ] Migrar taxonomia/classificação (conteúdo de prompts) → `utils/prompts_content/`
-- [ ] Migrar `GeminiClassifier`/extractor de NF → `utils/classification/`, `utils/extraction/`
-- [ ] Migrar `processor.py` (2821 linhas), `validator.py` (1203), `extractor.py` (1001) → subdivisão (ver Fase 3)
-- [ ] Migrar SQL para `queries/*.sql` (sem SQL inline em `.py`)
-- [ ] Ajustar Dockerfile: remover instalação de `agent-nf-validator`, instalar toolkit + extra `gemini` isolado (conflito protobuf, ver TROUBLESHOOTING.md #4)
+**Decisão de layout:** Fase 2 executada como *move mecânico* preservando o layout
+e o entrypoint `nf_processing_flow`. O achatamento por domínio (que era o plano
+original desta fase) fica para a Fase 3. Código vivo de `agent-nf-validator`
+mora agora em `pipelines/rj_iplanrio__nf_agent/utils/`:
+`utils/__init__.py` (orquestração, antigo `utils.py`), `utils/core/` (antigo
+`core/`) e `utils/run_poc/` (9 módulos vivos de `run_poc/`).
+
+- [x] Remover a entrada de `agent-nf-validator` do `pyproject.toml` (rev `1b427b4`); declarar deps transitivas diretamente
+- [x] Migrar `core/` → `utils/core/` (imports relativos internos preservados; mortos excluídos: `nf_fatura_merger.py`, `.old`)
+- [x] Migrar módulos vivos de `run_poc/` → `utils/run_poc/` (imports normalizados para relativos; hacks `sys.path.insert` removidos)
+- [x] Corrigir os 4 seams (`flow.py` credentials_helper; `utils` bigquery_writer/bq_input_reader/run_pipeline)
+- [x] Migrar SQL para `queries/*.sql` (despesa_classificada.sql — sem SQL inline em `.py`)
+- [x] Ajustar Dockerfile: remover instalação de `agent-nf-validator`; extra `gemini` continua isolado (conflito protobuf, ver TROUBLESHOOTING.md #4)
+- [x] Regenerar `uv.lock` (231 linhas de deps transitivas removidas)
+- [x] `ruff --fix` (183 auto-fixes seguros aplicados; restante é estilo legado — Fase 4)
+- [ ] Adicionar `iplanrio-agent-toolkit` como dependência git pinada — **aguardando**: o código migrado ainda não o importa (integração ocorre na Fase 5); evita dep órfã
 - [ ] Portar/adicionar testes da pipeline
 - [ ] Smoke test em staging (branch `staging/rj-iplanrio-cgm-nf-agent`)
 
