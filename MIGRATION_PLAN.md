@@ -94,12 +94,39 @@ mora agora em `pipelines/rj_iplanrio__nf_agent/utils/`:
 - [ ] Portar/adicionar testes da pipeline
 - [ ] Smoke test em staging (branch `staging/rj-iplanrio-cgm-nf-agent`)
 
-### Fase 3 — Quebrar os arquivos grandes da pipeline
+### Fase 3 — Quebrar os arquivos grandes da pipeline ✅ (concluída)
 
-- [ ] `processor.py` (2821 linhas) → submódulos de `utils/pipeline/`
-- [ ] `validator.py` (1203) → `utils/compliance/`
-- [ ] `extractor.py` (1001) → `utils/extraction/`
-- [ ] Manter contrato público de `flow.py`/`tasks.py` intacto
+**3a — Relocações ✅ (commitada no branch staging):** movidos `utils/core/extractor.py`
+→ `utils/extraction/`, `utils/core/compliance_validator/` → `utils/compliance/`,
+`utils/run_poc/processor.py` → `utils/pipeline/`; `bigquery_loader.py` recriado em
+`utils/run_poc/`.
+
+**3b — Splits por mixins ✅ (commitada no branch staging):** as três classes grandes
+foram desmembradas em submódulos coesos, compondo a classe original (API pública e
+re-exports preservados):
+
+- [x] `processor.py` (2821 linhas → 42) → `utils/pipeline/` com mixins
+  `POCProcessorSetupMixin` (setup.py), `POCProcessorCacheMixin` (cache.py),
+  `POCProcessorProcessMixin` (process.py), `POCProcessorMetadataMixin` (metadata.py),
+  `POCProcessorDatabaseMixin` (database.py); `ExecutionMode` extraído para
+  `modes.py` (sem dependências).
+- [x] `validator.py` (1203) → `utils/compliance/` com mixins
+  `ComplianceValidatorCoreMixin` (core.py), `ComplianceValidatorMatchingMixin`
+  (matching.py), `ComplianceValidatorValidateMixin` (validate.py),
+  `ComplianceValidatorReportMixin` (report.py); `validator.py` (153 linhas) mantém
+  `compute_classification`, `load_expected_nfs_from_excel` e `validate_against_expected`.
+- [x] `extractor.py` (1001) → `utils/extraction/` com mixins
+  `NFExtractorAuthMixin` (auth.py), `NFExtractorPromptMixin` (prompt.py),
+  `NFExtractorPdfMixin` (pdf.py), `NFExtractorCoalesceMixin` (coalesce.py),
+  `NFExtractorApiMixin` (api.py); `extractor.py` (46 linhas) compõe a classe e
+  mantém `extract_nf_data`.
+- [x] Quebra de ciclo de import: fachada `utils/core/__init__.py` re-exporta
+  compliance/extraction de forma **lazy** (PEP 562 `__getattr__`); `core/pipeline.py`
+  importa `NFExtractor` lazy via `TYPE_CHECKING`/property.
+- [x] Manter contrato público de `flow.py`/`tasks.py` intacto (smoke test via
+  `load_script` com `__package__` + identidade de objetos confirmadas).
+- [x] `ruff check` sem novos erros introduzidos pelo split (F821 do split resolvidos;
+  restantes são pré-existentes, ex. `pd` em `run_pipeline.py`).
 
 ### Fase 4 — Conformidade com o STYLEGUIDE de `prefect_rj_iplanrio`
 
