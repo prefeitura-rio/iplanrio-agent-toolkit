@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ruff_cache/
+.pytest_cache/
+build/
+dist/
+
+# Ambientes
+.env
+.venv
+venv/
+
+# Credenciais
+credentials/
+*.json.key
+
+# uv
+uv.lock
